@@ -39,11 +39,18 @@ public class ProductsService : IProductsService
         var sasToken = "sv=2022-11-02&ss=b&srt=sco&sp=rtfx&se=2025-03-15T23:33:12Z&st=2025-03-11T15:33:12Z&spr=https,http&sig=4ei3MaQpFpjoQQ7D50cSvt9KoTMli4vIl5NUxvPsNhg%3D";
 
         foreach(var aProduct in products) {
-            var blobClient = containerClient.GetBlobClient(aProduct.Name);
-            BlobProperties properties = await blobClient.GetPropertiesAsync();
+            BlobProperties properties = null;
+            try {
+                var blobClient = containerClient.GetBlobClient(aProduct.Name);
+                properties = await blobClient.GetPropertiesAsync();
+            } catch (Exception e)  {
+                continue;
+            }
+            
             foreach (var metadataItem in properties.Metadata)  {
                 if (metadataItem.Key == "releaseDate") {
                     if (DateTime.Parse(metadataItem.Value) > DateTime.Now) {
+                        // This adds the Coming soon image to images with future release dates
                         aProduct.ImageUrl = "https://contosostorage110325.blob.core.windows.net/dbtorestore/istockphoto-1412730098-612x612.jpg?"+sasToken;
                     }
                 }
