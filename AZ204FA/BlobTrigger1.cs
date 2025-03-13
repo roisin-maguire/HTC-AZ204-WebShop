@@ -12,6 +12,7 @@ using Azure.Storage.Blobs.Specialized;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats;
 
 namespace Company.Function
 {
@@ -31,30 +32,60 @@ namespace Company.Function
 
             return client;
         }
-        
+
         [Function(nameof(BlobTrigger1))]
         public async Task Run([BlobTrigger("dbtorestore/{name}", Connection = "")] Stream stream, string name)
         {
             using var blobStreamReader = new StreamReader(stream);
             var content = await blobStreamReader.ReadToEndAsync();
-            _logger.LogInformation($"C# Blob trigger function Processed blob\n Name: {name} \n Data: {content}");
-            using (Image image = Image.Load(stream))
+
+            stream.Position = 0;
+
+            var format = Image.DetectFormat(stream);
+            if (format is not null)
             {
-                int width = 100;
-                int height = 100;
-                image.Mutate(x => x.Resize(width, height));
+                using (Image image = Image.Load(stream))
+                { // configuration, pixelType, ImageMetadata, size
+                    
+                    int width = 100;
+                    int height = 100;
+                    image.Mutate(x => x.Resize(width, height));
+                    var blobServiceClient = GetBlobServiceClient(); // Gets the connection to the Storage Account
+                    BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("resize-dbtorestore"); // Connects to the container
+                                                                                                                          // var data = BinaryData.FromBytes(image); // Gets the data in the correct format to be uploaded
+                    
+                    var blobClient = containerClient.GetBlobClient($"thumb_{name}");
 
-                var sasToken = "sv=2022-11-02&ss=b&srt=sco&sp=rtfx&se=2025-03-15T23:33:12Z&st=2025-03-11T15:33:12Z&spr=https,http&sig=4ei3MaQpFpjoQQ7D50cSvt9KoTMli4vIl5NUxvPsNhg%3D";
-                var blobServiceClient = GetBlobServiceClient(); // Gets the connection to the Storage Account
-                BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient("resize-dbtorestore"); // Connects to the container
-                // var data = BinaryData.FromBytes(image); // Gets the data in the correct format to be uploaded
-                var blobClient = containerClient.GetBlobClient($"thumb_{name}");
-                var outPath = $"/temp_images/thumb_{name}";
-                image.Save(outPath);
-                await blobClient.UploadAsync(outPath, true); // Uploads the file
+                    using (var ms = new MemoryStream())
+                    {
+                        image.Save(ms, format);
+                        ms.Position = 0;
+                        await blobClient.UploadAsync(ms, true); // Uploads the file
 
+                    }
 
+                }
             }
+            else
+            {
+                _logger.LogInformation($"@@@@@@@@@@@@Format is null");
+            }
+
+
+            // var carImage = car.ImageFile.OpenReadStream()
+
+
+            // using Flurl; using Flurl.Http;
+            // string imageFilePathUrl = GetImageFilePathUrlFromAzureBlob();
+            // Stream stream = await imageFilePathUrl.GetStreamAsync(); using (Image<Rgba32> image = Image.Load<Rgba32>(stream))
+            // {
+            //     //Resize the loaded image URL...
+            // }
+
+
+
+
+
 
         }
 

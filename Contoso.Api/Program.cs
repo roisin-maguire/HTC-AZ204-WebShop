@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Contoso.Api.Configuration;
+using Microsoft.EntityFrameworkCore.Cosmos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,15 +15,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddCors(options => {
+builder.Services.AddCors(options =>
+{
     options.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
 });
 
-builder.Services.AddAuthentication(options => {
+builder.Services.AddAuthentication(options =>
+{
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer("Bearer", options => {
+}).AddJwtBearer("Bearer", options =>
+{
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -51,7 +55,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Add DbContext
 builder.Services.AddDbContext<ContosoDbContext>(options =>
 {
-    options.UseSqlServer(connectionString);
+    // options.UseSqlServer(connectionString);
+    //dotnet add package Microsoft.EntityFrameworkCore.Cosmos
+    Console.WriteLine($"~~~~~~~~ {connectionString}");
+    options.UseCosmos(connectionString,    "CloudyDB");
+    //
+    //databaseName: "cloudydb");
 });
 
 var app = builder.Build();

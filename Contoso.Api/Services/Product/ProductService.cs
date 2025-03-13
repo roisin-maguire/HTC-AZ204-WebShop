@@ -108,8 +108,11 @@ public class ProductsService : IProductsService
 
         // Below adds the product to the DB
         var productModel = _mapper.Map<Product>(product);
+        Console.WriteLine(productModel.Id);
+        productModel.Id = Math.Abs(Guid.NewGuid().GetHashCode());
         _context.Products.Add(productModel);
         await _context.SaveChangesAsync();
+        Console.WriteLine(productModel.Id);
         return _mapper.Map<ProductDto>(productModel);
     }
 

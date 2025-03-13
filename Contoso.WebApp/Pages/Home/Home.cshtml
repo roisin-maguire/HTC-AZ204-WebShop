@@ -60,6 +60,7 @@
                     {
                         <img src="@product.ImageUrl" alt="@product.Name" class="product-image"/>
                     }
+                    @* Add comment *@
                     <p>Price: @product.Price.ToString("C")</p>
                     <form method="post" asp-page-handler="ImageClick">
                             <input type="hidden" name="productId" value="@product.Id" />

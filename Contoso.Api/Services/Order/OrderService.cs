@@ -42,18 +42,25 @@ public class OrderService : IOrderService
     {
         var newOrder = new Order
         {
+             Id = Math.Abs(Guid.NewGuid().GetHashCode()),
             UserId = orderDto.UserId,
             Total = orderDto.Total,
             Status = OrderStatus.Pending,
             CreatedAt = DateTime.UtcNow,
+      
         };
+        Console.WriteLine(">>>>>>>>>>>");
+        Console.WriteLine(newOrder);
+        Console.WriteLine(newOrder.Id);
+        Console.WriteLine("<<<<<<<<<<<<<");
+        
 
-        _context.Orders.Add(newOrder);
-
-        await _context.SaveChangesAsync();
+        // await _context.SaveChangesAsync();
 
         if (orderDto.Items != null)
         {
+
+            newOrder.Items = new List<OrderItem>();
             foreach (var orderItem in orderDto.Items)
             {
                 var newOrderItem = new OrderItem
@@ -63,12 +70,13 @@ public class OrderService : IOrderService
                     Quantity = orderItem.Quantity,
                     UnitPrice = orderItem.Price
                 };
-
-                _context.OrderItems.Add(newOrderItem);
+                newOrder.Items.Append(newOrderItem);
+                // _context.OrderItems.Add(newOrderItem);
             }
 
-            await _context.SaveChangesAsync();      
         }
+        _context.Orders.Add(newOrder);
+        await _context.SaveChangesAsync();
 
         return _mapper.Map<OrderDto>(newOrder);     
     }
